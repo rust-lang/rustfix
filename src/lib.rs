@@ -5,7 +5,7 @@ extern crate serde_json;
 pub mod diagnostics;
 use diagnostics::{Diagnostic, DiagnosticSpan};
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct LinePosition {
     pub line: usize,
     pub column: usize,
@@ -17,7 +17,7 @@ impl std::fmt::Display for LinePosition {
     }
 }
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct LineRange {
     pub start: LinePosition,
     pub end: LinePosition,
@@ -39,6 +39,12 @@ pub struct Suggestion {
     /// This split is useful for higlighting the part that gets replaced
     pub text: (String, String, String),
     pub replacement: String,
+}
+
+impl Suggestion {
+    pub fn is_use_suggestion(&self) -> bool {
+        self.replacement.starts_with("use ") && self.replacement.ends_with(";\n")
+    }
 }
 
 fn collect_span(message: &str, span: &DiagnosticSpan) -> Option<Suggestion> {

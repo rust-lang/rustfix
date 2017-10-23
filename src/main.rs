@@ -13,11 +13,12 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::error::Error;
 use std::process::Command;
+use std::collections::{HashMap, HashSet};
 
 use colored::Colorize;
 use clap::{Arg, App};
 
-use rustfix::Suggestion;
+use rustfix::{Suggestion, LineRange, LinePosition};
 use rustfix::diagnostics::Diagnostic;
 
 const USER_OPTIONS: &'static str = "What do you want to do? \
@@ -56,6 +57,9 @@ fn try_main() -> Result<(), ProgramError> {
         .arg(Arg::with_name("yolo")
             .long("yolo")
             .help("Automatically apply all unambiguous suggestions"))
+        .arg(Arg::with_name("apply-only-use")
+             .long("apply-only-use")
+             .help("Apply only use fix suggestions"))
         .get_matches();
 
     let mut extra_args = Vec::new();
@@ -70,16 +74,27 @@ fn try_main() -> Result<(), ProgramError> {
         AutofixMode::None
     };
 
+    let apply_only_use = matches.is_present("apply-only-use");
+
     // Get JSON output from rustc...
     let json = get_json(&extra_args)?;
 
-    let suggestions: Vec<Suggestion> = json.lines()
+    let mut suggestions: Vec<Suggestion> = json.lines()
         .filter(not_empty)
         // Convert JSON string (and eat parsing errors)
         .flat_map(|line| serde_json::from_str::<CargoMessage>(line))
         // One diagnostic line might have multiple suggestions
         .flat_map(|cargo_msg| rustfix::collect_suggestions(&cargo_msg.message, None))
+        .filter(|v| {
+            if apply_only_use {
+                v.is_use_suggestion()
+            } else {
+                true
+            }
+        })
         .collect();
+
+    comb_use_suggestions(&mut suggestions);
 
     try!(handle_suggestions(&suggestions, mode));
 
@@ -321,4 +336,65 @@ fn apply_suggestion(suggestion: &Suggestion) -> Result<(), ProgramError> {
     try!(file.write_all(&new_content));
 
     Ok(())
+}
+
+
+/// We need some special care for use suggestions,
+/// to eliminate duplicates, for example for HashMap,
+/// rustc suggests 4 variants:
+/// use std::collections::HashMap;
+/// use std::collections::hash_map::HashMap;
+/// use std::collections::HashMap;
+/// use std::collections::hash_map::HashMap;
+///
+/// Also it would be good to place them at the top of file
+fn comb_use_suggestions(suggestions: &mut Vec<Suggestion>) {
+    let mut to_remove = HashSet::new();
+    {
+        type UseSuggestionId<'a> = (&'a str, LineRange, &'a str);
+        let mut use_classes = HashMap::<UseSuggestionId, Vec<usize>>::new();
+        for (i, s) in suggestions.iter().enumerate() {
+            if s.is_use_suggestion() {
+                let short_type_name = {
+                    let use_expr = &s.replacement;
+                    assert!(use_expr.starts_with("use "));
+                    assert!(use_expr.ends_with(";\n"));
+                    use_expr.rfind("::").map(|idx|
+                                             &use_expr[idx + 2..use_expr.len() - 2])
+                        .unwrap_or(&use_expr[4..use_expr.len() - 2])
+                };
+                let id = (s.file_name.as_str(), s.line_range, short_type_name);
+                use_classes.entry(id).or_insert(vec![i]).push(i);
+            }
+        }
+
+        for (_, class) in &use_classes {
+            let min_pos: usize = class[class
+                                       .iter()
+                                       .map(|v| suggestions[*v].replacement.len())
+                                       .enumerate()
+                                       .min_by(|l, r| l.1.cmp(&r.1))
+                                       .unwrap().0];
+            for idx in class.iter() {
+                if *idx != min_pos {
+                    to_remove.insert(*idx);
+                }
+            }
+        }
+    }
+
+    let ret: Vec<_> = suggestions.drain(..)
+        .enumerate()
+        .filter(|&(i, _)| !to_remove.contains(&i))
+        .map(|v| {
+            let new_v = Suggestion {
+                line_range:  LineRange {
+                    start: LinePosition { line: 1, column: 1},
+                    end: LinePosition { line: 1, column: 1}
+                }, ..v.1
+            };
+            new_v
+        })
+        .collect();
+    *suggestions = ret;
 }
