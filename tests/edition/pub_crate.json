@@ -1,0 +1,108 @@
+{
+  "message": "unreachable `pub` item",
+  "code": {
+    "code": "unreachable_pub",
+    "explanation": null
+  },
+  "level": "warning",
+  "spans": [
+    {
+      "file_name": "./tests/edition/pub_crate.rs",
+      "byte_start": 70,
+      "byte_end": 98,
+      "line_start": 5,
+      "line_end": 5,
+      "column_start": 5,
+      "column_end": 33,
+      "is_primary": true,
+      "text": [
+        {
+          "text": "    pub const FOO: &str = \"BAR\";",
+          "highlight_start": 5,
+          "highlight_end": 33
+        }
+      ],
+      "label": null,
+      "suggested_replacement": null,
+      "expansion": null
+    }
+  ],
+  "children": [
+    {
+      "message": "lint level defined here",
+      "code": null,
+      "level": "note",
+      "spans": [
+        {
+          "file_name": "./tests/edition/pub_crate.rs",
+          "byte_start": 25,
+          "byte_end": 44,
+          "line_start": 2,
+          "line_end": 2,
+          "column_start": 8,
+          "column_end": 27,
+          "is_primary": true,
+          "text": [
+            {
+              "text": "#[warn(rust_2018_migration)]",
+              "highlight_start": 8,
+              "highlight_end": 27
+            }
+          ],
+          "label": null,
+          "suggested_replacement": null,
+          "expansion": null
+        }
+      ],
+      "children": [],
+      "rendered": null
+    },
+    {
+      "message": "#[warn(unreachable_pub)] implied by #[warn(rust_2018_migration)]",
+      "code": null,
+      "level": "note",
+      "spans": [],
+      "children": [],
+      "rendered": null
+    },
+    {
+      "message": "or consider exporting it for use by other crates",
+      "code": null,
+      "level": "help",
+      "spans": [],
+      "children": [],
+      "rendered": null
+    },
+    {
+      "message": "consider restricting its visibility",
+      "code": null,
+      "level": "help",
+      "spans": [
+        {
+          "file_name": "./tests/edition/pub_crate.rs",
+          "byte_start": 70,
+          "byte_end": 73,
+          "line_start": 5,
+          "line_end": 5,
+          "column_start": 5,
+          "column_end": 8,
+          "is_primary": true,
+          "text": [
+            {
+              "text": "    pub const FOO: &str = \"BAR\";",
+              "highlight_start": 5,
+              "highlight_end": 8
+            }
+          ],
+          "label": null,
+          "suggested_replacement": "crate",
+          "suggestion_applicability": "MachineApplicable",
+          "expansion": null
+        }
+      ],
+      "children": [],
+      "rendered": null
+    }
+  ],
+  "rendered": "warning: unreachable `pub` item\n --> ./tests/edition/pub_crate.rs:5:5\n  |\n5 |     pub const FOO: &str = \"BAR\";\n  |     ---^^^^^^^^^^^^^^^^^^^^^^^^^\n  |     |\n  |     help: consider restricting its visibility: `crate`\n  |\nnote: lint level defined here\n --> ./tests/edition/pub_crate.rs:2:8\n  |\n2 | #[warn(rust_2018_migration)]\n  |        ^^^^^^^^^^^^^^^^^^^\n  = note: #[warn(unreachable_pub)] implied by #[warn(rust_2018_migration)]\n  = help: or consider exporting it for use by other crates\n\n"
+}

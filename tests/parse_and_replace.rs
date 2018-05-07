@@ -24,6 +24,7 @@ use rustfix::apply_suggestions;
 
 mod fixmode {
     pub const EVERYTHING: &str = "yolo";
+    pub const MIGRATION: &str = "migration";
     pub const EDITION: &str = "edition";
 }
 
@@ -229,6 +230,12 @@ fn assert_fixtures(dir: &str, mode: &str) {
 fn everything() {
     let _ = env_logger::try_init();
     assert_fixtures("./tests/everything", fixmode::EVERYTHING);
+}
+
+#[test]
+fn migration() {
+    let _ = env_logger::try_init();
+    assert_fixtures("./tests/migration", fixmode::MIGRATION);
 }
 
 #[test]
