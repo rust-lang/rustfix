@@ -1,0 +1,108 @@
+{
+  "message": "Absolute paths must start with `self`, `super`, `crate`, or an external crate name in the 2018 edition",
+  "code": {
+    "code": "absolute_path_starting_with_module",
+    "explanation": null
+  },
+  "level": "warning",
+  "spans": [
+    {
+      "file_name": "./tests/migration/absolute_path_starting_with_module.rs",
+      "byte_start": 143,
+      "byte_end": 153,
+      "line_start": 7,
+      "line_end": 7,
+      "column_start": 9,
+      "column_end": 19,
+      "is_primary": true,
+      "text": [
+        {
+          "text": "    use ::bar::Bar;",
+          "highlight_start": 9,
+          "highlight_end": 19
+        }
+      ],
+      "label": null,
+      "suggested_replacement": null,
+      "expansion": null
+    }
+  ],
+  "children": [
+    {
+      "message": "lint level defined here",
+      "code": null,
+      "level": "note",
+      "spans": [
+        {
+          "file_name": "./tests/migration/absolute_path_starting_with_module.rs",
+          "byte_start": 54,
+          "byte_end": 88,
+          "line_start": 3,
+          "line_end": 3,
+          "column_start": 9,
+          "column_end": 43,
+          "is_primary": true,
+          "text": [
+            {
+              "text": "#![warn(absolute_path_starting_with_module)]",
+              "highlight_start": 9,
+              "highlight_end": 43
+            }
+          ],
+          "label": null,
+          "suggested_replacement": null,
+          "expansion": null
+        }
+      ],
+      "children": [],
+      "rendered": null
+    },
+    {
+      "message": "this was previously accepted by the compiler but is being phased out; it will become a hard error in the 2018 edition!",
+      "code": null,
+      "level": "warning",
+      "spans": [],
+      "children": [],
+      "rendered": null
+    },
+    {
+      "message": "for more information, see issue TBD",
+      "code": null,
+      "level": "note",
+      "spans": [],
+      "children": [],
+      "rendered": null
+    },
+    {
+      "message": "use `crate`",
+      "code": null,
+      "level": "help",
+      "spans": [
+        {
+          "file_name": "./tests/migration/absolute_path_starting_with_module.rs",
+          "byte_start": 143,
+          "byte_end": 153,
+          "line_start": 7,
+          "line_end": 7,
+          "column_start": 9,
+          "column_end": 19,
+          "is_primary": true,
+          "text": [
+            {
+              "text": "    use ::bar::Bar;",
+              "highlight_start": 9,
+              "highlight_end": 19
+            }
+          ],
+          "label": null,
+          "suggested_replacement": "crate::bar::Bar",
+          "suggestion_applicability": "MachineApplicable",
+          "expansion": null
+        }
+      ],
+      "children": [],
+      "rendered": null
+    }
+  ],
+  "rendered": "warning: Absolute paths must start with `self`, `super`, `crate`, or an external crate name in the 2018 edition\n --> ./tests/migration/absolute_path_starting_with_module.rs:7:9\n  |\n7 |     use ::bar::Bar;\n  |         ^^^^^^^^^^ help: use `crate`: `crate::bar::Bar`\n  |\nnote: lint level defined here\n --> ./tests/migration/absolute_path_starting_with_module.rs:3:9\n  |\n3 | #![warn(absolute_path_starting_with_module)]\n  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in the 2018 edition!\n  = note: for more information, see issue TBD\n\n"
+}
