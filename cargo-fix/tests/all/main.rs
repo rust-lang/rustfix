@@ -321,3 +321,4 @@ mod dependencies;
 mod smoke;
 mod subtargets;
 mod warnings;
+mod edition;
