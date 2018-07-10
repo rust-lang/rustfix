@@ -39,7 +39,7 @@ fn fixes_missing_ampersand() {
         )
         .build();
 
-    p.expect_cmd("cargo fix -- --all-targets")
+    p.expect_cmd("cargo-fix fix --all-targets")
         .fix_everything()
         .stdout("")
         .stderr_contains("[COMPILING] foo v0.1.0 (CWD)")
@@ -84,8 +84,8 @@ fn fix_features() {
         )
         .build();
 
-    p.expect_cmd("cargo fix").run();
+    p.expect_cmd("cargo-fix fix").run();
     p.expect_cmd("cargo build").run();
-    p.expect_cmd("cargo fix -- --features bar").run();
+    p.expect_cmd("cargo-fix fix --features bar").run();
     p.expect_cmd("cargo build --features bar").run();
 }
