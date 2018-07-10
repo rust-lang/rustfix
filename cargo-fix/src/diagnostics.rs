@@ -4,6 +4,8 @@
 use std::env;
 use std::io::{BufReader, Read, Write};
 use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread::{self, JoinHandle};
 
 use atty;
@@ -64,7 +66,8 @@ pub struct Server {
 }
 
 pub struct StartedServer {
-    _addr: SocketAddr,
+    addr: SocketAddr,
+    done: Arc<AtomicBool>,
     thread: Option<JoinHandle<()>>,
 }
 
@@ -81,18 +84,21 @@ impl Server {
     where
         F: Fn(Message, &mut StandardStream) + Send + 'static,
     {
-        let _addr = self.listener.local_addr()?;
+        let addr = self.listener.local_addr()?;
+        let done = Arc::new(AtomicBool::new(false));
+        let done2 = done.clone();
         let thread = thread::spawn(move || {
-            self.run(on_message);
+            self.run(on_message, &done2);
         });
 
         Ok(StartedServer {
-            _addr,
+            addr,
             thread: Some(thread),
+            done,
         })
     }
 
-    fn run<F>(self, on_message: F)
+    fn run<F>(self, on_message: F, done: &AtomicBool)
     where
         F: Fn(Message, &mut StandardStream),
     {
@@ -105,12 +111,21 @@ impl Server {
                     warn!("invalid diagnostics message: {}", e);
                 }
             }
+
+            if done.load(Ordering::SeqCst) {
+                break
+            }
         }
     }
 }
 
 impl Drop for StartedServer {
     fn drop(&mut self) {
+        self.done.store(true, Ordering::SeqCst);
+        // Ignore errors here as this is largely best-effort
+        if TcpStream::connect(&self.addr).is_err() {
+            return;
+        }
         drop(self.thread.take().unwrap().join());
     }
 }
