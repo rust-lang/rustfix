@@ -59,9 +59,27 @@ impl Data {
             return Vec::new();
         }
 
+        // Both LF and CRLF are reported as single span unit so we need to skip
+        // any CRs encountered in the text when adapting the span information
+        // to the original `[u8]` data.
+        let mut crs = 0;
         self.parts.iter().fold(Vec::new(), |mut acc, d| {
             match d.data {
-                State::Initial => acc.extend_from_slice(&self.original[d.start..=d.end]),
+                State::Initial => {
+                    let start = d.start + crs;
+                    let mut count = d.end - d.start + 1;
+                    let segment = self.original[start..].iter().take_while(|&&b| {
+                        if count == 0 { return false; }
+
+                        if b == b'\r' {
+                            crs += 1;
+                        } else {
+                            count -= 1;
+                        }
+                        true
+                    });
+                    acc.extend(segment)
+                },
                 State::Replaced(ref d) | State::Inserted(ref d) => acc.extend_from_slice(&d),
             };
             acc
@@ -246,6 +264,17 @@ mod tests {
 
         d.replace_range(12, 16, b"lol").unwrap();
         assert_eq!("lorem\nlol\nlol", str(&d.to_vec()));
+    }
+
+    #[test]
+    fn replace_multiple_lines_with_crlf() {
+        let mut d = Data::new(b"lorem\r\nipsum\r\ndolor");
+
+        d.replace_range(6, 10, b"lol").unwrap();
+        assert_eq!("lorem\r\nlol\r\ndolor", str(&d.to_vec()));
+
+        d.replace_range(12, 16, b"lol").unwrap();
+        assert_eq!("lorem\r\nlol\r\nlol", str(&d.to_vec()));
     }
 
     #[test]
